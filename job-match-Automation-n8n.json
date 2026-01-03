@@ -1,0 +1,758 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "https://drive.google.com/file/d/1KGupqkXtlHXYMRsBnm1IVPml5MZtfIZ8/view?usp=sharing",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        480,
+        1136
+      ],
+      "id": "b57d7313-b3d6-44c2-979a-46a8b5dbb646",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jHnCqCMgLmr0iEPd",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        704,
+        1136
+      ],
+      "id": "7504e569-538a-4c2c-9242-d6bf266c1e15",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ZHBCZ0i1SAr39wA_D9wOQdlaOZ14gC1jWjARxm8Tnqc/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Filter",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZHBCZ0i1SAr39wA_D9wOQdlaOZ14gC1jWjARxm8Tnqc/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        928,
+        1136
+      ],
+      "id": "d058a6ae-f4c4-4a2e-a829-25b30620275f",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "knpaeTrQvoTvy72v",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let url = \"https://www.linkedin.com/jobs/search/?f_TPR=r86400\"\n\nconst keyword = $input.first().json.Keyword\nconst location = $input.first().json.Location\nconst experienceLevel = $input.first().json['Experience Level']\nconst remote = $input.first().json.Remote\nconst easyApply = $input.first().json['Easy Apply']\n\nif (keyword != \"\") {\n  url += `&keywords=${keyword}`;\n}\n\nif (location != \"\") {\n  url += `&location=${location}`;\n}\n\nif (experienceLevel !== \"\") {\n  // Transform experience levels to LinkedIn codes\n  // Internship -> 1, Entry level -> 2, Associate -> 3\n  // Mid-Senior level -> 4, Director -> 5, Executive -> 6\n  const transformedExperiences = experienceLevel\n    .split(\",\")\n    .map((exp) => {\n      switch (exp.trim()) {\n        case \"Internship\": return \"1\";\n        case \"Entry level\": return \"2\";\n        case \"New Grad\": return \"3\";\n        default: return \"\";\n      }\n    })\n    .filter(Boolean);\n  url += `&f_E=${transformedExperiences.join(\",\")}`;\n}\n\nif (remote.length != \"\") {\n  // Transform remote options to LinkedIn codes\n  // On-Site -> 1, Remote -> 2, Hybrid -> 3\n  const transformedRemote = remote\n    .split(\",\")\n    .map((e) => {\n      switch (e.trim()) {\n        case \"Remote\": return \"2\";\n        case \"Hybrid\": return \"3\";\n        case \"On-Site\": return \"1\";\n        default: return \"\";\n      }\n    })\n    .filter(Boolean);\n  url += `&f_WT=${transformedRemote.join(\",\")}`;\n}\n\nif (easyApply != \"\") {\n  url += \"&f_EA=true\";\n}\n\nreturn {url}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        1136
+      ],
+      "id": "043f2414-19a6-4362-8b7a-e6774cf940ba",
+      "name": "LinkedIn Search URL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1376,
+        1136
+      ],
+      "id": "6903d6f1-4bbf-433b-a3a6-d1817d237ce6",
+      "name": "Fetch jobs from LinkedIn"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "jobs",
+              "cssSelector": "ul.jobs-search__results-list li div a[class*=\"base-card\"]",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        1136
+      ],
+      "id": "aa722fd0-7f92-4c28-86d8-dcec69722f13",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "jobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1824,
+        1136
+      ],
+      "id": "571d3f14-ad9a-4a23-889a-6d7f913dd7a0",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2048,
+        1136
+      ],
+      "id": "77358771-07b2-45e5-a36d-728e603d58be",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2272,
+        944
+      ],
+      "id": "be5efd6d-835d-4be7-a336-bb462c5d845f",
+      "name": "Wait",
+      "webhookId": "12409f66-fbe7-48bd-b9d7-68449f197264"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.jobs }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2496,
+        944
+      ],
+      "id": "2da08d47-b71c-4c86-963c-637f5b1c3c7b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "Title",
+              "cssSelector": "div h1"
+            },
+            {
+              "key": "Company",
+              "cssSelector": "div span a"
+            },
+            {
+              "key": "Location",
+              "cssSelector": "div span[class*='topcard__flavor topcard__flavor--bullet']"
+            },
+            {
+              "key": "Description",
+              "cssSelector": "div.description__text.description__text--rich"
+            },
+            {
+              "key": "Job ID",
+              "cssSelector": "a[data-item-type='semaphore']",
+              "returnValue": "attribute",
+              "attribute": "data-semaphore-content-urn"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2720,
+        944
+      ],
+      "id": "193a7aff-18f8-4408-bec9-e18c9aa6e2b7",
+      "name": "HTML1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "240418dc-3349-48d5-ba59-3aa590d71950",
+              "name": "Description",
+              "value": "={{ $json.Description.replaceAll(/\\s+/g, \" \")}}",
+              "type": "string"
+            },
+            {
+              "id": "7b24938f-8b47-488d-9f65-54d036dcffd5",
+              "name": "Job ID",
+              "value": "={{ $json['Job ID'].split(\":\").last() }}",
+              "type": "string"
+            },
+            {
+              "id": "d6addada-9e01-464f-a768-c19f6224c491",
+              "name": "Apply Link",
+              "value": "={{ \"https://www.linkedin.com/jobs/view/\"+ $json['Job ID'].split(\":\").last()  }}",
+              "type": "string"
+            },
+            {
+              "id": "21c89d3a-c8b6-44eb-9719-9ae5716a7c76",
+              "name": "Title",
+              "value": "={{ $json.Title }}",
+              "type": "string"
+            },
+            {
+              "id": "da713845-9a81-486e-bff2-1613105e424d",
+              "name": "Company",
+              "value": "={{ $json.Company }}",
+              "type": "string"
+            },
+            {
+              "id": "1a9a31dd-8d51-4f35-b6b6-ca8a348de5d7",
+              "name": "Location",
+              "value": "={{ $json.Location }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2944,
+        944
+      ],
+      "id": "ced0435c-fe52-49f3-ae74-688308477300",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a precise job-matching assistant.\n\nReturn ONE JSON object wrapped in ```json fences, followed by the line END_OF_JSON.\nNo extra prose. No Markdown inside the JSON. No comments.\n\nINPUTS\njob_description: {{ $json.Description }}\nmy_resume: {{ $('Extract from File').item.json.text }}\n\nTASKS\n1) Parse job_description → job_analysis with keys:\n   title (string), company (string), must_have_skills (string[]), nice_to_have_skills (string[]),\n   responsibilities (string[]), years_of_experience (string), education_certifications (string),\n   location_constraints (string), domain_industry_focus (string), tech_stack (string[]), measurable_kpis (string[])\n\n2) Parse my_resume → resume_analysis:\n   core_skills (string[]),\n   tools_tech { programming_languages[], frontend_technologies[], backend_technologies[], databases_devops[] },\n   years_of_experience_key_areas (object of short strings),\n   accomplishments_with_metrics (string[]),\n   education_certs (string[]), domains (string[]), roles_titles (string[]),\n   leadership_collaboration (string[]), location_work_auth (string)\n\n3) Scoring (integer 0–100):\n   - Skills/Tools overlap: 40\n   - Relevant experience & seniority: 25\n   - Responsibilities alignment: 15\n   - Education/Certs fit: 10\n   - Domain/industry fit: 5\n   - Logistics (location/work auth/availability): 5\n   Allow partial credit; deduct up to 10 via red_flags. Clamp to [0,100], integer.\n\n4) Explain the score:\n   For each bucket, provide 1–3 concise evidence bullets. Cite \"JD\" or \"Resume\" and include short quoted fragments (escape quotes).\n\n5) Gaps & Suggestions:\n   List missing/weak requirements with 1–2 concrete upskilling steps per gap.\n\n6) Cover letter:\n   150–220 words (2–4 short paragraphs), tailored to the role/company.\n   Concrete impacts; no greeting/signature. JSON-safe: escape all \" as \\\", use \\n for newlines.\n\nSTRICT CONTENT RULES (to prevent invalid JSON)\n- Do NOT paste raw paragraphs, markdown (**bold**, lists), headings, or multi-line blocks into any array fields.\n- Every array element must be a short phrase (≤ 140 characters), single line, no line breaks, no asterisks, no bullets.\n- If a JD section is long, summarize into short phrases before placing into arrays.\n- Do NOT include unrelated job text inside arrays or objects. Keep each value semantically atomic.\n- Never invent company/title; use \"\" if unknown.\n- No trailing commas anywhere.\n\nSTRICT OUTPUT RULES\n- Output exactly the following schema (keys and types). No extra keys.\n\nSCHEMA\n```json\n{\n  \"job_analysis\": {\n    \"title\": \"\",\n    \"company\": \"\",\n    \"must_have_skills\": [],\n    \"nice_to_have_skills\": [],\n    \"responsibilities\": [],\n    \"years_of_experience\": \"\",\n    \"education_certifications\": \"\",\n    \"location_constraints\": \"\",\n    \"domain_industry_focus\": \"\",\n    \"tech_stack\": [],\n    \"measurable_kpis\": []\n  },\n  \"resume_analysis\": {\n    \"core_skills\": [],\n    \"tools_tech\": {\n      \"programming_languages\": [],\n      \"frontend_technologies\": [],\n      \"backend_technologies\": [],\n      \"databases_devops\": []\n    },\n    \"years_of_experience_key_areas\": {},\n    \"accomplishments_with_metrics\": [],\n    \"education_certs\": [],\n    \"domains\": [],\n    \"roles_titles\": [],\n    \"leadership_collaboration\": [],\n    \"location_work_auth\": \"\"\n  },\n  \"match_score\": 0,\n  \"score_explanation\": [\n    { \"category\": \"Skills/Tools overlap (40 points)\", \"score\": 0, \"evidence\": [] },\n    { \"category\": \"Relevant experience depth & seniority (25 points)\", \"score\": 0, \"evidence\": [] },\n    { \"category\": \"Responsibilities alignment (15 points)\", \"score\": 0, \"evidence\": [] },\n    { \"category\": \"Education/Certs fit (10 points)\", \"score\": 0, \"evidence\": [] },\n    { \"category\": \"Domain/industry fit (5 points)\", \"score\": 0, \"evidence\": [] },\n    { \"category\": \"Logistics (location, work auth, availability) (5 points)\", \"score\": 0, \"evidence\": [] }\n  ],\n  \"red_flags\": [],\n  \"gaps_and_suggestions\": [\n    { \"gap\": \"\", \"suggestion\": \"\" }\n  ],\n  \"cover_letter\": \"\"\n}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        3168,
+        944
+      ],
+      "id": "074165a8-e227-408f-8a43-bb221fa369ba",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3248,
+        1168
+      ],
+      "id": "f346f9d8-f19a-4e29-89ef-951d02f380a6",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "yQTClqoHKNFYZfB4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  // 0) Read model output from AI Agent node\n  const raw = String(($('AI Agent').item.json.output ?? ''));\n\n  // 1) Strip code fences\n  let s = raw\n    .replace(/`{2,3}(?:json)?\\s*/gi, '')\n    .replace(/\\s*`{3}\\s*$/gi, '');\n\n  // 1b) Normalize curly quotes (Gemini sometimes emits them)\n  s = s.replace(/[\\u201C\\u201D]/g, '\"').replace(/\\u2019/g, \"'\");\n\n  // 2) Cut at END_OF_JSON if present\n  const endIdx = s.indexOf('END_OF_JSON');\n  if (endIdx !== -1) s = s.slice(0, endIdx);\n\n  // 3) Extract first complete { ... } by brace counting\n  const start = s.indexOf('{');\n  if (start < 0) return {};\n  let depth = 0, inStr = false, esc = false, end = -1;\n  for (let i = start; i < s.length; i++) {\n    const ch = s[i];\n    if (inStr) {\n      if (esc) { esc = false; }\n      else if (ch === '\\\\') { esc = true; }\n      else if (ch === '\"') { inStr = false; }\n    } else {\n      if (ch === '\"') inStr = true;\n      else if (ch === '{') depth++;\n      else if (ch === '}') { depth--; if (depth === 0) { end = i + 1; break; } }\n    }\n  }\n  if (end < 0) return {};\n\n  const cleaned = s.slice(start, end).trim();\n\n  try {\n    return JSON.parse(cleaned);   // JSON mode expects an OBJECT\n  } catch (e) {\n    // As a last resort, return an empty object to keep the run alive\n    return {};\n  }\n})() }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3520,
+        944
+      ],
+      "id": "c30e3d87-3c67-4bda-a884-d7023bf32b29",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a ruthless resume editor. Compare the inputs and output ONLY crisp, point-wise changes to improve job fit.\n\nInputs:\n- job_description: {{ $json }}\n- my_resume: {{ $('Extract from File').item.json.text }}\n\nInstructions:\n- Output a numbered list; highest-impact first.\n- One line per point; <= 14 words.\n- Start each line with a tag: [ADD], [REMOVE], [REWRITE], [ORDER], [QUANTIFY], [KEYWORDS], [FORMAT], [FOCUS].\n- Base every point on gaps vs. the job_description; do not invent experience.\n- Prefer concrete actions: skills to add, bullets to rewrite, sections to reorder/remove.\n- Include one line: 'Missing keywords: term1, term2, ...' (only if any).\n- No intros, explanations, code fences, or extra text - points only.\n\nOutput: points only, exactly as specified above.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        3744,
+        944
+      ],
+      "id": "d0d18c82-4361-408f-a513-fe2e28dbf3ef",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-pro-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3824,
+        1168
+      ],
+      "id": "89fb9381-d4bd-4182-93a5-8990fcd79628",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "yQTClqoHKNFYZfB4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ZHBCZ0i1SAr39wA_D9wOQdlaOZ14gC1jWjARxm8Tnqc/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 11035642,
+          "mode": "list",
+          "cachedResultName": "Result",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZHBCZ0i1SAr39wA_D9wOQdlaOZ14gC1jWjARxm8Tnqc/edit#gid=11035642"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $('Edit Fields').item.json.Title }}",
+            "Company ": "={{ $('Edit Fields').item.json.Company }}",
+            "Locaton": "={{ $('Edit Fields').item.json.Location }}",
+            "Link": "={{ $('Edit Fields').item.json['Apply Link'] }}",
+            "Score": "={{ $('Edit Fields1').item.json.match_score }}",
+            "Cover Letter": "={{ $('Edit Fields1').item.json.cover_letter }}",
+            "Skills": "={{ $('Edit Fields1').item.json.resume_analysis.core_skills }}",
+            "Improvements": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "Title"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company ",
+              "displayName": "Company ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Locaton",
+              "displayName": "Locaton",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cover Letter",
+              "displayName": "Cover Letter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Improvements",
+              "displayName": "Improvements",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4096,
+        1120
+      ],
+      "id": "9b611057-b441-4a7a-b17e-b6d022290ccb",
+      "name": "Append or update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "knpaeTrQvoTvy72v",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "amaralkaff@gmail.com",
+        "subject": "=🚀 Job Match (Score: {{ $json.Score }}): {{ $json.Title }} at {{ $json[\"Company \"] }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">   <h2 style=\"color: #2c3e50;\">Job Analysis: {{ $json.Title }}</h2>   <p><strong>Company:</strong> {{ $json[\"Company \"] }} | <strong>Location:</strong> {{ $json.Locaton }}</p>      <div style=\"background-color: #f8f9fa; padding: 15px; border-left: 5px solid #007bff; margin: 20px 0;\">     <h3 style=\"margin-top: 0;\">Match Score: <span style=\"color: #e67e22;\">{{ $json.Score }}/100</span></h3>     <p><em>Note: This is a high-level MLE role. Focus on infrastructure and backend reliability to bridge the gap.</em></p>   </div>    <h3 style=\"color: #27ae60;\">Action Items (Resume Improvements):</h3>   <div style=\"background-color: #f4fdf4; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;\">     {{ $json.Improvements.replace(/\\n/g, '<br>') }}   </div>    <h3 style=\"color: #2980b9;\">Draft Cover Letter Snippet:</h3>   <blockquote style=\"font-style: italic; border-left: 3px solid #ccc; padding-left: 15px;\">     {{ $json[\"Cover Letter\"] }}   </blockquote>    <p style=\"margin-top: 25px;\">     <a href=\"{{ $json.Link }}\" style=\"background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">View Job Posting</a>   </p> </div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2272,
+        1136
+      ],
+      "id": "f7de243f-28e8-4e15-bbf7-6a217a3b3d9c",
+      "name": "Send a message",
+      "webhookId": "f0d6158b-a72b-4e84-8f3e-0e8ecfaeda72",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "MOW6oMMOMtMIr04B",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        1136
+      ],
+      "id": "1ae84d5b-7914-4bf1-b7b8-e6781e8a25e1",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Search URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Search URL": {
+      "main": [
+        [
+          {
+            "node": "Fetch jobs from LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch jobs from LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "0a8d5626-aad9-4828-bbc2-42c3d18e440c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9100a52a75973fc4416f2aa778ce12e472e8926603980a2be93a005000fe0b1b"
+  },
+  "id": "dYPXcsmgO3GLTMI7",
+  "tags": []
+}
