@@ -35,7 +35,7 @@ This n8n workflow automates the process of finding relevant jobs on LinkedIn, an
 You need to set up the following credentials in n8n:
 *   **Google Drive API**: To access your resume.
 *   **Google Sheets API**: To read search filters and write results.
-*   **Google Gemini (PaLM) API**: For the AI agents.
+*   **Google Gemini API**: For the AI agents.
 *   **Gmail API**: To send email alerts.
 
 ### Configuration
