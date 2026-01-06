@@ -522,6 +522,75 @@
       ],
       "id": "1ae84d5b-7914-4bf1-b7b8-e6781e8a25e1",
       "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ZHBCZ0i1SAr39wA_D9wOQdlaOZ14gC1jWjARxm8Tnqc/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 11035642,
+          "mode": "list",
+          "cachedResultName": "Result",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZHBCZ0i1SAr39wA_D9wOQdlaOZ14gC1jWjARxm8Tnqc/edit#gid=11035642"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2000,
+        1336
+      ],
+      "id": "83b92550-c6e7-4933-9029-7d848141f234",
+      "name": "Get Processed Jobs",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "knpaeTrQvoTvy72v",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const url = item.json.jobs;\n  let jobId = \"\";\n  \n  // 1. Try standard view/123 format\n  let match = url && url.match(/view\\/(\\d+)/);\n  if (match) {\n    jobId = match[1];\n  } else if (url) {\n    // 2. Try slug format: text-1234567890?\n    // Looks for 10+ digits preceded by a dash or slash, and ending with ? or string end\n    match = url.match(/[-/](\\d{10,})(?:\\?|$)/);\n    if (match) {\n        jobId = match[1];\n    }\n  }\n\n  let cleanLink = url;\n  if (jobId) {\n    // Standardize to the format used in the Sheet\n    cleanLink = \"https://www.linkedin.com/jobs/view/\" + jobId;\n  }\n  \n  return { json: { ...item.json, Link: cleanLink } };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        1136
+      ],
+      "id": "a1b2c3d4-e5f6-4a5b-8c9d-123456789789",
+      "name": "Clean URL"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByFields",
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Link",
+              "field2": "Link"
+            }
+          ]
+        },
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2200,
+        1136
+      ],
+      "id": "52c87640-a5d6-41e2-9158-6c737030e555",
+      "name": "Filter Duplicates"
     }
   ],
   "pinData": {},
@@ -593,6 +662,39 @@
       ]
     },
     "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Clean URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean URL": {
+      "main": [
+        [
+          {
+            "node": "Filter Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Processed Jobs": {
+      "main": [
+        [
+          {
+            "node": "Filter Duplicates",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Filter Duplicates": {
       "main": [
         [
           {
@@ -736,6 +838,11 @@
         [
           {
             "node": "Download file",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Processed Jobs",
             "type": "main",
             "index": 0
           }

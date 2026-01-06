@@ -12,6 +12,7 @@ This n8n workflow automates the process of finding relevant jobs on LinkedIn, an
 *   **AI-Powered Scoring**: Uses **Google Gemini 3 Flash** to score the job fit (0-100) based on skills, experience, and responsibilities.
 *   **Draft Generation**: Automatically generates a tailored 150-200 word cover letter for high-match roles.
 *   **Resume Improvement**: Uses **Google Gemini 3 Pro** to suggest specific resume edits to increase your success rate for each job.
+*   **Smart Deduplication**: Automatically skips jobs that have already been processed (checked against the Result Sheet) to save AI credits and time.
 *   **Notifications**: Logs all results to Google Sheets and sends an email alert with the match score and actionable insights.
 
 ## Workflow Steps
