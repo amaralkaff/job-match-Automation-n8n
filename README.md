@@ -1,48 +1,45 @@
 # Automated Job Matching & Cover Letter Generator (n8n)
 
-This n8n workflow automates the process of finding relevant jobs on LinkedIn, analyzing your fit against your resume using Google Gemini, and generating tailored cover letters.
+Automates LinkedIn job search, AI-powered resume matching, and cover letter generation using Google Gemini.
 
 ![Workflow Overview](Capture1.PNG)
 ![Execution Details](Capture2.PNG)
 
 ## Features
 
-*   **Automated Scraping**: Fetches job listings from LinkedIn based on keywords and location filters defined in a Google Sheet.
-*   **Resume Analysis**: Extracts text from your Resume (PDF) stored in Google Drive.
-*   **AI-Powered Scoring**: Uses **Google Gemini 3 Flash** to score the job fit (0-100) based on skills, experience, and responsibilities.
-*   **Draft Generation**: Automatically generates a tailored 150-200 word cover letter for high-match roles.
-*   **Resume Improvement**: Uses **Google Gemini 3 Pro** to suggest specific resume edits to increase your success rate for each job.
-*   **Smart Deduplication**: Automatically skips jobs that have already been processed (checked against the Result Sheet) to save AI credits and time.
-*   **Notifications**: Logs all results to Google Sheets and sends an email alert with the match score and actionable insights.
+- **LinkedIn Scraping** – Fetches jobs based on filters from Google Sheets
+- **AI Scoring** – Gemini Flash scores job fit (0-100)
+- **Cover Letter** – Auto-generates tailored 150-200 word drafts
+- **Resume Tips** – Gemini Pro suggests improvements per job
+- **Deduplication** – Skips already-processed jobs
+- **Email Alerts** – Sends results summary to your inbox
 
-## Workflow Steps
+## Google Sheets Setup
 
-1.  **Trigger**: Scheduled daily (e.g., 5:00 AM) or triggered manually.
-2.  **Input Data**:
-    *   Downloads your Resume from Google Drive.
-    *   Reads search criteria (Keywords, Location, Remote prefernce, etc.) from a Google Sheet.
-3.  **Job Search**: Constructs a LinkedIn search URL and scrapes job postings.
-4.  **Processing (Loop)**:
-    *   Fetches full job descriptions.
-    *   **Gemini Agent 1**: Analyzes the JD vs. Resume, calculates a Match Score, and writes a Cover Letter.
-    *   **Gemini Agent 2**: Generates a ruthless list of resume improvements (keywords to add, bullets to rewrite).
-5.  **Output**:
-    *   Appends the Job Title, Company, Match Score, Cover Letter, and Suggestions to a Google Sheet.
-    *   Sends an HTML-formatted email summary to your inbox.
+### Input Sheet
+| Keyword | Location | Experience Level | Remote | Easy Apply |
+|---------|----------|------------------|--------|------------|
+| Software Engineer | Singapore | Entry Level | Remote | ✓ |
 
-## Setup Requirements
+![Input Sheet](Capture3.PNG)
 
-### Credentials
-You need to set up the following credentials in n8n:
-*   **Google Drive API**: To access your resume.
-*   **Google Sheets API**: To read search filters and write results.
-*   **Google Gemini API**: For the AI agents.
-*   **Gmail API**: To send email alerts.
+### Result Sheet
+| Title | Company | Location | Link | Score | Cover Letter | Skills | Improvements |
+|-------|---------|----------|------|-------|--------------|--------|--------------|
 
-### Configuration
-1.  **Google Sheet**: Create a sheet with columns for your search filters (Keyword, Location, Experience Level, Remote, etc.).
-2.  **Resume**: Upload your resume (PDF) to Google Drive and update the file ID in the "Download file" node.
-3.  **Output Sheet**: Create a destination sheet with columns: `Title`, `Company`, `Location`, `Link`, `Score`, `Cover Letter`, `Skills`, `Improvements`.
+![Result Sheet](Capture4.PNG)
 
-## Usage
-Import the `job-match-Automation-n8n.json` file into your n8n instance and configure the credentials.
+## Credentials Required
+
+- **Google Drive API** – Resume access
+- **Google Sheets API** – Read/write sheets
+- **Google Gemini API** – AI analysis
+- **Gmail API** – Email notifications
+
+## Quick Start
+
+1. Import `job-match-Automation-n8n.json` into n8n
+2. Configure credentials above
+3. Upload resume (PDF) to Google Drive, update file ID in workflow
+4. Set up Input & Result sheets as shown
+5. Run manually or schedule daily
